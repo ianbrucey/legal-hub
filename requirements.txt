@@ -11,6 +11,9 @@ pydantic>=2.3.0
 # Utility dependencies
 loguru>=0.7.0
 
+# Gemini dependencies
+google-genai>=1.0.0
+
 # Testing dependencies
 httpx>=0.24.0
 sseclient-py>=1.7.0

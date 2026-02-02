@@ -1,491 +1,606 @@
 <div align="center" id="top">
 
-<img src="https://github.com/assafelovic/gpt-researcher/assets/13554167/20af8286-b386-44a5-9a83-3be1365139c3" alt="Logo" width="80">
+# ⚖️ Legal Intelligence Hub
 
-# 🔍 GPT Researcher MCP Server
+> **AI-Powered Legal Research & Document Analysis MCP Server**
 
-[![Website](https://img.shields.io/badge/Official%20Website-gptr.dev-teal?style=for-the-badge&logo=world&logoColor=white&color=0891b2)](https://gptr.dev)
-[![Documentation](https://img.shields.io/badge/Documentation-DOCS-f472b6?logo=googledocs&logoColor=white&style=for-the-badge)](https://docs.gptr.dev/docs/gpt-researcher/mcp-server/getting-started)
-[![Discord Follow](https://dcbadge.vercel.app/api/server/QgZXvJAccX?style=for-the-badge&theme=clean-inverted&?compact=true)](https://discord.gg/QgZXvJAccX)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
 
-## Why GPT Researcher MCP?
+---
 
-While LLM apps can access web search tools with MCP, **GPT Researcher MCP delivers deep research results.** Standard search tools return raw results requiring manual filtering, often containing irrelevant sources and wasting context window space.
+## 🎯 Overview
 
-GPT Researcher autonomously explores and validates numerous sources, focusing only on relevant, trusted and up-to-date information. Though slightly slower than standard search (~30 seconds wait), it delivers:
+The **Legal Intelligence Hub** is a comprehensive Model Context Protocol (MCP) server that provides AI agents with powerful legal research and document analysis capabilities. Built on top of GPT Researcher, it extends the platform with specialized legal tools for case law search, opinion retrieval, and document RAG.
 
-- ✨ Higher quality information
-- 📊 Optimized context usage
-- 🔎 Comprehensive results
-- 🧠 Better reasoning for LLMs
+### Why Legal Intelligence Hub?
 
-## 💻 Claude Desktop Demo
-https://github.com/user-attachments/assets/ef97eea5-a409-42b9-8f6d-b82ab16c52a8
+While standard MCP servers provide basic web search, **Legal Intelligence Hub delivers specialized legal research capabilities**:
 
-## 🚀 Quick Start with Claude Desktop
+- ⚖️ **10M+ Legal Cases** - Search federal and state court opinions
+- 📚 **Deep Research** - Comprehensive research with citations and sources
+- 🤖 **Document RAG** - Semantic search across legal documents
+- 🔍 **Citation Lookup** - Resolve legal citations instantly
+- ✨ **Optimized for Legal Work** - Purpose-built for legal professionals and AI agents
 
-**Want to use this with Claude Desktop right away?** Here's the fastest path:
+### Key Features
 
-1. **Install dependencies:**
-   ```bash
-   git clone https://github.com/assafelovic/gptr-mcp.git
-   pip install -r requirements.txt
-   ```
+- **GPT Researcher Integration** - Deep web research with citations
+- **Court Listener API** - Access to 10M+ legal cases and opinions
+- **Gemini File Search** - Document RAG for legal document analysis
+- **Docker Ready** - Production-ready containerized deployment
+- **MCP Compatible** - Works with Claude, Augment, and other MCP clients
 
-2. **Set up your Claude Desktop config** at `~/Library/Application Support/Claude/claude_desktop_config.json`:
-   ```json
-   {
-     "mcpServers": {
-       "gptr-mcp": {
-         "command": "python",
-         "args": ["/absolute/path/to/gpt-researcher/gptr-mcp/server.py"],
-         "env": {
-           "OPENAI_API_KEY": "your-openai-key-here",
-           "TAVILY_API_KEY": "your-tavily-key-here"
-         }
-       }
-     }
-   }
-   ```
+## 🚀 Quick Start
 
-3. **Restart Claude Desktop** and start researching! 🎉
+### Prerequisites
 
-For detailed setup instructions, see the [full Claude Desktop Integration section](#-claude-desktop-integration) below.
+- Docker (recommended) or Python 3.11+
+- API Keys:
+  - [Google AI (Gemini)](https://ai.google.dev/) - Required
+  - [Tavily Search](https://tavily.com/) - Required
+  - [Court Listener](https://www.courtlistener.com/help/api/) - Required
+  - [OpenAI](https://platform.openai.com/) - Optional
 
-### Resources
-- `research_resource`: Get web resources related to a given task via research.
-
-### Primary Tools
-
-- `deep_research`: Performs deep web research on a topic, finding the most reliable and relevant information
-- `quick_search`: Performs a fast web search optimized for speed over quality, returning search results with snippets. Supports any GPTR supported web retriever such as Tavily, Bing, Google, etc... Learn more [here](https://docs.gptr.dev/docs/gpt-researcher/search-engines)
-- `write_report`: Generate a report based on research results
-- `get_research_sources`: Get the sources used in the research
-- `get_research_context`: Get the full context of the research
-
-### Prompts
-
-- `research_query`: Create a research query prompt
-
-## Prerequisites
-
-Before running the MCP server, make sure you have:
-
-1. Python 3.11 or higher installed
-   - **Important**: GPT Researcher >=0.12.16 requires Python 3.11+
-2. API keys for the services you plan to use:
-   - [OpenAI API key](https://platform.openai.com/api-keys)
-   - [Tavily API key](https://app.tavily.com)
-
-You can also connect any other web search engines or MCP using GPTR supported retrievers. Check out the [docs here](https://docs.gptr.dev/docs/gpt-researcher/search-engines)
-
-## ⚙️ Installation
-
-1. Clone the GPT Researcher repository:
-```bash
-git clone https://github.com/assafelovic/gpt-researcher.git
-cd gpt-researcher
-```
-
-2. Install the gptr-mcp dependencies:
-```bash
-cd gptr-mcp
-pip install -r requirements.txt
-```
-
-3. Set up your environment variables:
-   - Copy the `.env.example` file to create a new file named `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   - Edit the `.env` file and add your API keys and configure other settings:
-   ```bash
-   OPENAI_API_KEY=your_openai_api_key
-   TAVILY_API_KEY=your_tavily_api_key
-   ```
-You can also add any other env variable for your GPT Researcher configuration.
-
-## 🚀 Running the MCP Server
-
-You can run the MCP server in several ways:
-
-### Method 1: Directly using Python
+### Installation with Docker (Recommended)
 
 ```bash
-python server.py
+# 1. Clone the repository
+git clone https://github.com/ianbrucey/legal-hub.git
+cd legal-hub
+
+# 2. Create .env file with your API keys
+cat > .env << EOF
+GOOGLE_API_KEY=your_google_api_key
+TAVILY_API_KEY=your_tavily_api_key
+COURTLISTENER_API_KEY=your_courtlistener_api_key
+FAST_LLM=google_genai:gemini-2.5-pro
+SMART_LLM=google_genai:gemini-2.5-pro
+STRATEGIC_LLM=google_genai:gemini-2.5-pro
+COURTLISTENER_BASE_URL=https://www.courtlistener.com/api/rest/v3
+EOF
+
+# 3. Build and run
+docker build -t legal-hub:latest .
+docker run -d --name legal-hub -p 8000:8000 --env-file .env legal-hub:latest
+
+# 4. Verify it's running
+curl http://localhost:8000/health
+# Expected: {"status":"healthy","service":"mcp-server"}
 ```
 
-### Method 2: Using the MCP CLI (if installed)
+---
 
-```bash
-mcp run server.py
-```
+## 🔧 MCP Client Configuration
 
-### Method 3: Using Docker (recommended for production)
+### Augment AI
 
-#### Quick Start
+Edit `~/.augment/settings.json`:
 
-The simplest way to run with Docker:
-
-```bash
-# Build and run with docker-compose
-docker-compose up -d
-
-# Or manually:
-docker build -t gptr-mcp .
-docker run -d \
-  --name gptr-mcp \
-  -p 8000:8000 \
-  --env-file .env \
-  gptr-mcp
-```
-
-#### For n8n Integration
-
-If you need to connect to an existing n8n network:
-
-```bash
-# First, start the container
-docker-compose up -d
-
-# Then connect to your n8n network
-docker network connect n8n-mcp-net gptr-mcp
-
-# Or create a shared network first
-docker network create n8n-mcp-net
-docker network connect n8n-mcp-net gptr-mcp
-```
-
-**Note**: The Docker image uses Python 3.11 to meet the requirements of gpt-researcher >=0.12.16. If you encounter errors during the build, ensure you're using the latest Dockerfile from this repository.
-
-Once the server is running, you'll see output indicating that the server is ready to accept connections. You can verify it's working by:
-
-1. **SSE Endpoint**: Access the Server-Sent Events endpoint at http://localhost:8000/sse to get a session ID
-2. **MCP Communication**: Use the session ID to send MCP messages to http://localhost:8000/messages/?session_id=YOUR_SESSION_ID
-3. **Testing**: Run the test script with `python test_mcp_server.py`
-
-**Important for Docker/n8n Integration:**
-- The server binds to `0.0.0.0:8000` to work with Docker containers
-- Uses SSE transport for web-based MCP communication  
-- Session management requires getting a session ID from `/sse` endpoint first
-- Each client connection needs a unique session ID for proper communication
-
-## 🚦 Transport Modes & Best Practices
-
-The GPT Researcher MCP server supports multiple transport protocols and automatically chooses the best one for your environment:
-
-### Transport Types
-
-| Transport | Use Case | When to Use |
-|-----------|----------|-------------|
-| **STDIO** | Claude Desktop, Local MCP clients | Default for local development |
-| **SSE** | Docker, Web clients, n8n integration | Auto-enabled in Docker |
-| **Streamable HTTP** | Modern web deployments | Advanced web deployments |
-
-### Automatic Detection
-
-The server automatically detects your environment:
-
-```bash
-# Local development (default)
-python server.py
-# ➜ Uses STDIO transport (Claude Desktop compatible)
-
-# Docker environment  
-docker run gptr-mcp
-# ➜ Auto-detects Docker, uses SSE transport
-
-# Manual override
-export MCP_TRANSPORT=sse
-python server.py
-# ➜ Forces SSE transport
-```
-
-### Environment Variables
-
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `MCP_TRANSPORT` | Force specific transport | `stdio` | `sse`, `streamable-http` |
-| `DOCKER_CONTAINER` | Force Docker mode | Auto-detected | `true` |
-
-### Configuration Examples
-
-#### For Claude Desktop (Local)
 ```json
-// ~/Library/Application Support/Claude/claude_desktop_config.json
 {
   "mcpServers": {
-    "gpt-researcher": {
-      "command": "python",
-      "args": ["/absolute/path/to/server.py"],
-      "env": {
-         "..."
-      }
+    "legal-hub": {
+      "url": "http://127.0.0.1:8000/sse",
+      "transport": "streamable-http"
     }
   }
 }
 ```
 
-#### For Docker/Web Deployment
-```bash
-# Set transport explicitly for web deployment
-export MCP_TRANSPORT=sse
-python server.py
+### Google Gemini
 
-# Or use Docker (auto-detects)
+Edit `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "legal-hub": {
+      "url": "http://127.0.0.1:8000/sse",
+      "transport": "streamable-http"
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "legal-hub": {
+      "url": "http://127.0.0.1:8000/sse",
+      "transport": "streamable-http"
+    }
+  }
+}
+```
+
+**Note**: Restart your AI client after updating settings.
+
+---
+
+## 📚 Available Tools (11 Total)
+
+### 🔍 GPT Researcher Tools (5)
+
+#### 1. `deep_research`
+Conduct comprehensive research on a topic with citations.
+
+**Parameters**:
+- `query` (string, required) - Research question or topic
+- `report_type` (string, optional) - Type of report: `research_report`, `detailed_report`, `quick_report`
+- `max_sources` (int, optional) - Maximum sources to use (default: 10)
+
+**Example**:
+```python
+deep_research(
+    query="Legal implications of AI-generated content",
+    report_type="research_report",
+    max_sources=10
+)
+```
+
+#### 2. `quick_search`
+Fast web search for immediate answers.
+
+**Parameters**:
+- `query` (string, required) - Search query
+- `max_results` (int, optional) - Maximum results (default: 5)
+
+**Example**:
+```python
+quick_search(
+    query="What is qualified immunity?",
+    max_results=5
+)
+```
+
+#### 3. `write_report`
+Generate formatted research reports.
+
+**Parameters**:
+- `query` (string, required) - Original research question
+- `research_data` (string, required) - Raw research data
+- `report_type` (string, optional) - Report format
+
+**Example**:
+```python
+write_report(
+    query="AI regulation in the EU",
+    research_data="...",
+    report_type="research_report"
+)
+```
+
+#### 4. `get_research_sources`
+Retrieve sources used in research.
+
+#### 5. `get_research_context`
+Get full context of research.
+
+---
+
+### ⚖️ Court Listener Tools (3)
+
+#### 6. `search_cases`
+Search 10M+ legal cases by keyword, party name, or citation.
+
+**Parameters**:
+- `query` (string, required) - Search query
+- `court` (string, optional) - Court ID filter (e.g., `scotus`, `ca9`)
+- `date_from` (string, optional) - Start date (YYYY-MM-DD)
+- `date_to` (string, optional) - End date (YYYY-MM-DD)
+- `max_results` (int, optional) - Maximum results (default: 10)
+
+**Example**:
+```python
+search_cases(
+    query="Miranda v Arizona",
+    court="scotus",
+    date_from="2020-01-01",
+    max_results=10
+)
+```
+
+**Response**:
+```json
+{
+  "results": [
+    {
+      "id": 107252,
+      "case_name": "Miranda v. Arizona",
+      "citation": "384 U.S. 436",
+      "date_filed": "1966-06-13",
+      "court": "Supreme Court of the United States",
+      "snippet": "...",
+      "citation_count": 57669
+    }
+  ],
+  "count": 46909
+}
+```
+
+#### 7. `get_opinion`
+Retrieve full text of a legal opinion.
+
+**Parameters**:
+- `opinion_id` (int, required) - Court Listener opinion ID
+
+**Example**:
+```python
+get_opinion(opinion_id=107252)
+```
+
+#### 8. `lookup_citation`
+Look up a case by its legal citation.
+
+**Parameters**:
+- `citation` (string, required) - Legal citation (e.g., "384 U.S. 436")
+
+**Example**:
+```python
+lookup_citation(citation="384 U.S. 436")
+```
+
+---
+
+### 🤖 Gemini File Search Tools (3)
+
+#### 9. `create_file_store`
+Create a document store for RAG (Retrieval-Augmented Generation).
+
+**Parameters**:
+- `name` (string, required) - Unique store name
+- `display_name` (string, optional) - Human-readable display name
+
+**Example**:
+```python
+create_file_store(
+    name="legal-contracts",
+    display_name="Legal Contracts Database"
+)
+```
+
+**Response**:
+```json
+{
+  "store_name": "legal-contracts",
+  "store_id": "corpora/legal-contracts-abc123"
+}
+```
+
+#### 10. `upload_to_file_store`
+Upload a file to a document store for semantic search.
+
+**Parameters**:
+- `store_name` (string, required) - Name of the file store
+- `file_path` (string, required) - Local path to the file
+- `display_name` (string, optional) - Display name for the file
+
+**Example**:
+```python
+upload_to_file_store(
+    store_name="legal-contracts",
+    file_path="/path/to/contract.pdf"
+)
+```
+
+**Response**:
+```json
+{
+  "file_id": "files/abc123xyz",
+  "status": "uploaded"
+}
+```
+
+#### 11. `file_search_query`
+Query documents in a file store using semantic search.
+
+**Parameters**:
+- `store_name` (string, required) - Name of the file store
+- `query` (string, required) - Search query
+- `model` (string, optional) - Gemini model to use (default: `gemini-2.5-flash`)
+
+**Example**:
+```python
+file_search_query(
+    store_name="legal-contracts",
+    query="What are the termination clauses?"
+)
+```
+
+**Response**:
+```json
+{
+  "results": [
+    {
+      "content": "Section 12: Termination...",
+      "relevance_score": 0.95
+    }
+  ],
+  "answer": "The termination clauses are found in Section 12..."
+}
+```
+
+---
+
+## 📖 Usage Examples
+
+### Example 1: Legal Case Research
+
+```
+User: Find recent Supreme Court cases about qualified immunity
+
+AI Agent: [Uses search_cases tool]
+- Query: "qualified immunity"
+- Court: "scotus"
+- Date from: "2020-01-01"
+
+Results: Found 127 cases including:
+1. Taylor v. Riojas (2020) - Qualified immunity denied
+2. Brownback v. King (2021) - Qualified immunity analysis
+...
+```
+
+### Example 2: Deep Legal Research
+
+```
+User: Research the legal implications of AI-generated content ownership
+
+AI Agent: [Uses deep_research tool]
+- Conducts comprehensive research across legal databases
+- Analyzes copyright law, case precedents, and expert opinions
+- Generates detailed report with citations
+
+Report includes:
+- Current legal framework
+- Key court decisions
+- Expert analysis
+- Recommendations
+```
+
+### Example 3: Document Analysis
+
+```
+User: Analyze this contract for non-compete clauses
+
+AI Agent:
+1. [Uses create_file_store] - Creates "contract-analysis" store
+2. [Uses upload_to_file_store] - Uploads contract.pdf
+3. [Uses file_search_query] - Queries for "non-compete clauses"
+
+Results: Found 3 non-compete clauses in Sections 8, 15, and 22...
+```
+
+---
+
+## 🐳 Docker Deployment
+
+### Using Docker Compose
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  legal-hub:
+    build: .
+    container_name: legal-hub
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+```
+
+Deploy:
+
+```bash
 docker-compose up -d
 ```
 
-#### For n8n MCP Integration
-```bash
-# Use the container name as hostname
-docker run --name gptr-mcp -p 8000:8000 gptr-mcp
+### Production Considerations
 
-# In n8n, connect to: http://gptr-mcp:8000/sse
-```
+1. **Port Configuration**: Change host port if 8000 is in use
+2. **Resource Limits**: Add memory/CPU limits in docker-compose.yml
+3. **Logging**: Configure log rotation and retention
+4. **Security**: Use reverse proxy (nginx/traefik) with SSL
+5. **Monitoring**: Set up health check monitoring
+6. **Backups**: Backup .env file and configuration
 
-### Transport Endpoints
+See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment guide.
 
-When using SSE or HTTP transports:
-
-- **Health Check**: `GET /health`
-- **SSE Endpoint**: `GET /sse` (get session ID)
-- **MCP Messages**: `POST /messages/?session_id=YOUR_SESSION_ID`
-
-### Best Practices
-
-1. **Local Development**: Use default STDIO for Claude Desktop
-2. **Production**: Use Docker with automatic SSE detection
-3. **Testing**: Use health endpoints to verify connectivity
-4. **n8n Integration**: Always use container networking with Docker
-5. **Web Deployment**: Consider Streamable HTTP for modern clients
-
-## Integrating with Claude
-
-You can integrate your MCP server with Claude using:
-
-**[Claude Desktop Integration](https://docs.gptr.dev/docs/gpt-researcher/mcp-server/claude-integration)** - For using with Claude desktop application on Mac
-
-For detailed instructions, follow the link above.
-
-## 💻 Claude Desktop Integration
-
-To integrate your locally running MCP server with Claude for Mac, you'll need to:
-
-1. Make sure the MCP server is installed and running
-2. Configure Claude Desktop:
-   - Locate or create the configuration file at `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Add your local GPT Researcher MCP server to the configuration **with environment variables**
-   - Restart Claude to apply the configuration
-
-### ⚠️ Important: Environment Variables Required
-
-Claude Desktop launches your MCP server as a separate subprocess, so you **must** explicitly pass your API keys in the configuration. The server cannot access your shell's environment variables or `.env` file automatically.
-
-### Configuration Example
-
-```json
-{
-  "mcpServers": {
-    "gptr-mcp": {
-      "command": "python",
-      "args": ["/absolute/path/to/your/server.py"],
-      "env": {
-        "OPENAI_API_KEY": "your-actual-openai-key-here",
-        "TAVILY_API_KEY": "your-actual-tavily-key-here"
-      }
-    }
-  }
-}
-```
-
-### Security Note
-
-**🔒 Your Claude Desktop config contains sensitive API keys.** Protect it:
-
-```bash
-chmod 600 ~/Library/Application\ Support/Claude/claude_desktop_config.json
-```
-
-Never commit this file to version control.
-
-### Alternative: Environment Variable Script
-
-For better security, create a wrapper script:
-
-**run_gptr_mcp.sh**:
-```bash
-#!/bin/bash
-source /path/to/your/.env
-python /absolute/path/to/server.py
-```
-
-Then use it in Claude Desktop:
-```json
-{
-  "mcpServers": {
-    "gptr-mcp": {
-      "command": "/absolute/path/to/run_gptr_mcp.sh"
-    }
-  }
-}
-```
-
-For complete step-by-step instructions, see the [Claude Desktop Integration guide](https://docs.gptr.dev/docs/gpt-researcher/mcp-server/claude-integration).
-
-## 📝 Example Usage with Claude
-
-```
-User: I'm considering investing in NVIDIA. Can you research the current state of the company, recent stock performance, latest product announcements, and analyst opinions?
-
-Claude: I'll help you research NVIDIA for investment purposes. This will take a moment as I conduct deep research to find the most up-to-date information about their stock performance, recent developments, and expert analysis.
-
-[Claude uses deep_research tool - this takes 30-40 seconds]
-
-Claude: Based on my research, here's a comprehensive analysis of NVIDIA's current state:
-
-## NVIDIA (NVDA) Current Status
-
-### Recent Stock Performance
-- Current price: $942.89 (as of my research)
-- YTD performance: +90.4% 
-- 52-week range: $460.30 - $974.00
-- Market cap: ~$2.32 trillion
-
-### Recent Key Developments
-1. **Blackwell AI Platform**: At GTC 2024, NVIDIA unveiled the Blackwell architecture, their next-generation AI chip platform promising 4x performance improvement over Hopper. Major cloud providers (AWS, Google, Microsoft) have already committed to integrating Blackwell.
-
-2. **Q1 FY2025 Earnings (May 2024)**: 
-   - Revenue: $26.0 billion (+262% YoY)
-   - Data Center revenue: $22.6 billion (+427% YoY)
-   - Gross margin: 78.4%
-   - Announced 10-for-1 stock split effective June 7, 2024
-
-3. **Supply Chain Expansion**: Increased investments in manufacturing capacity with TSMC to address ongoing chip shortages for their high-demand AI GPUs.
-
-### Analyst Consensus
-- Strong Buy consensus with 37 analysts rating it "Buy," 5 "Hold," and 0 "Sell"
-- Average price target: $1,042 (post-split adjusted: $104.20)
-- Key bull thesis: Continued AI infrastructure spending and NVIDIA's dominant position in AI chips
-- Key bear concerns: Valuation, potential competition from AMD, Intel, and custom silicon from tech giants
-
-### Industry Position
-- Dominant in AI GPU market with estimated 80-90% market share
-- Expanding ecosystem through CUDA software platform and industry partnerships
-- Diversifying beyond chips with DGX Cloud, AI software platforms, and automotive solutions
-```
+---
 
 ## 🔧 Troubleshooting
 
-If you encounter issues while running the MCP server:
+### Container Won't Start
 
-### General Issues
-
-1. **API Keys**: Make sure your API keys are correctly set in the `.env` file
-2. **Python Version**: Check that you're using Python 3.11 or higher (required by gpt-researcher >=0.14.0)  
-3. **Dependencies**: Ensure all dependencies are installed correctly: `pip install -r requirements.txt`
-4. **Server Logs**: Check the server logs for error messages
-
-### Docker Issues
-
-1. **Container not accessible**: 
-   - Verify the container is running: `docker ps | grep gptr-mcp`
-   - Check container logs: `docker logs gptr-mcp`
-   - Confirm the server is binding to 0.0.0.0:8000 (logs should show this)
-
-2. **n8n Integration Issues**:
-   - Ensure both containers are on the same Docker network
-   - Use the container name `gptr-mcp` as the hostname in n8n
-   - Set the MCP server URL to: `http://gptr-mcp:8000/sse`
-
-3. **Session ID Issues**:
-   - The server uses SSE transport which requires session management
-   - First, get a session ID by connecting to `/sse` endpoint
-   - Use the session ID in subsequent MCP requests: `/messages/?session_id=YOUR_ID`
-   - Each client needs its own session ID
-
-### n8n MCP Integration Steps
-
-1. **Get Session ID**:
-   ```bash
-   curl http://gptr-mcp:8000/sse
-   # Look for: data: /messages/?session_id=XXXXX
-   ```
-
-2. **Initialize MCP**:
-   ```bash
-   curl -X POST http://gptr-mcp:8000/messages/?session_id=YOUR_SESSION_ID \
-     -H "Content-Type: application/json" \
-     -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {"roots": {"listChanged": true}}, "clientInfo": {"name": "n8n-client", "version": "1.0.0"}}}'
-   ```
-
-3. **Call Tools**:
-   ```bash
-   curl -X POST http://gptr-mcp:8000/messages/?session_id=YOUR_SESSION_ID \
-     -H "Content-Type: application/json" \
-     -d '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "quick_search", "arguments": {"query": "test"}}}'
-   ```
-
-### Testing the Server
-
-Run the included test script to verify functionality:
-
+**Check logs**:
 ```bash
-python test_mcp_server.py
+docker logs legal-hub
 ```
 
-This will test:
-- SSE connection and session ID retrieval
-- MCP initialization  
-- Tool discovery and execution
+**Common issues**:
+- Missing API keys in `.env`
+- Port 8000 already in use
+- Insufficient memory
 
-### Claude Desktop Issues
+**Solution**:
+```bash
+# Check if port is in use
+lsof -i :8000
 
-If your MCP server isn't working with Claude Desktop:
+# Remove and recreate
+docker rm -f legal-hub
+docker run -d --name legal-hub -p 8000:8000 --env-file .env legal-hub:latest
+```
 
-1. **Server not appearing in Claude**:
-   - Check your `claude_desktop_config.json` syntax is valid JSON
-   - Ensure you're using **absolute paths** (not relative)
-   - Verify the path to `server.py` is correct
-   - Restart Claude Desktop completely
+### Health Check Failing
 
-2. **"OPENAI_API_KEY not found" error**:
-   - Make sure you added API keys to the `env` section in your config
-   - Don't forget **both** `OPENAI_API_KEY` and `TAVILY_API_KEY`
-   - API keys should be the actual keys, not placeholders
+```bash
+# Check if server is responding
+curl -v http://localhost:8000/health
 
-3. **Tools not showing up**:
-   - Look for the 🔧 tools icon in Claude Desktop
-   - Check that Claude Desktop config file is in the right location:
-     - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-     - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+# Restart container
+docker restart legal-hub
+```
 
-4. **Python/Permission issues**:
-   - Make sure Python is accessible from the command line: `python --version`
-   - Try using full Python path: `"command": "/usr/bin/python3"` or `"command": "python3"`
-   - Check file permissions on your server.py file
+### Tools Not Working
 
-5. **Still not working?**
-   - Test the server manually: `python server.py` (should show STDIO transport message)
-   - Check Claude Desktop logs (if available)
-   - Try the alternative script method from the integration section above
+**Verify API keys**:
+```bash
+# Check environment variables inside container
+docker exec legal-hub env | grep API_KEY
+```
 
-## 👣 Next Steps
+### Performance Issues
 
-- Explore the [MCP protocol documentation](https://docs.anthropic.com/claude/docs/model-context-protocol) to better understand how to integrate with Claude
-- Learn about [GPT Researcher's core features](https://docs.gptr.dev/docs/gpt-researcher/getting-started/introduction) to enhance your research capabilities
-- Check out the [Advanced Usage](https://docs.gptr.dev/docs/gpt-researcher/mcp-server/advanced-usage) guide for more configuration options
+**Check resource usage**:
+```bash
+docker stats legal-hub
+```
+
+---
+
+## 📊 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Legal Intelligence Hub                    │
+│                      (MCP Server)                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ GPT Research │  │ Court Listen │  │ Gemini File  │      │
+│  │   (5 tools)  │  │   (3 tools)  │  │Search (3 tools)│    │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              FastMCP Framework                       │    │
+│  │         (HTTP/SSE Transport Layer)                   │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ MCP Protocol
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+   ┌────▼────┐         ┌────▼────┐        ┌────▼────┐
+   │ Augment │         │  Gemini │        │  Claude │
+   │   AI    │         │   AI    │        │ Desktop │
+   └─────────┘         └─────────┘        └─────────┘
+```
+
+---
+
+## 🚀 Development
+
+### Local Development (Without Docker)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/ianbrucey/legal-hub.git
+cd legal-hub
+
+# 2. Create virtual environment
+python3.11 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Create .env file
+cp .env.example .env
+# Edit .env with your API keys
+
+# 5. Run server
+python server.py
+```
+
+### Running Tests
+
+```bash
+# Test MCP server
+python tests/test_mcp_server.py
+
+# Test Court Listener integration
+python test_court_listener.py
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📚 Resources
+
+- **[Deployment Guide](DEPLOYMENT.md)** - Comprehensive deployment documentation
+- **[GPT Researcher Docs](https://docs.gptr.dev/)** - GPT Researcher documentation
+- **[Court Listener API](https://www.courtlistener.com/help/api/)** - Court Listener API documentation
+- **[Gemini API](https://ai.google.dev/)** - Google Gemini API documentation
+- **[MCP Protocol](https://docs.anthropic.com/claude/docs/model-context-protocol)** - Model Context Protocol specification
+
+---
+
+## 🏗️ Built With
+
+- **[GPT Researcher](https://github.com/assafelovic/gpt-researcher)** - Deep web research framework
+- **[FastMCP](https://github.com/jlowin/fastmcp)** - Python MCP server framework
+- **[Court Listener](https://www.courtlistener.com/)** - Legal case database
+- **[Google Gemini](https://ai.google.dev/)** - AI and document analysis
+- **[Docker](https://www.docker.com/)** - Containerization platform
+
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support / Contact
+---
 
-- [Community Discord](https://discord.gg/QgZXvJAccX)
-- Email: assaf.elovic@gmail.com
+## 📞 Support
+
+For issues, questions, or contributions:
+- **GitHub Issues**: [https://github.com/ianbrucey/legal-hub/issues](https://github.com/ianbrucey/legal-hub/issues)
+- **Documentation**: [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
+## 🙏 Acknowledgments
+
+- Built on top of [GPT Researcher](https://github.com/assafelovic/gpt-researcher) by Assaf Elovic
+- Court Listener data provided by [Free Law Project](https://free.law/)
+- Powered by Google's Gemini AI
+
+---
+
+<p align="center">
+  <strong>Legal Intelligence Hub</strong> - Empowering AI agents with legal research capabilities
+</p>
 
 <p align="right">
   <a href="#top">⬆️ Back to Top</a>

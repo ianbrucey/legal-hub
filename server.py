@@ -259,16 +259,206 @@ async def get_research_context(research_id: str) -> Dict[str, Any]:
 def research_query(topic: str, goal: str, report_format: str = "research_report") -> str:
     """
     Create a research query prompt for GPT Researcher.
-    
+
     Args:
         topic: The topic to research
         goal: The goal or specific question to answer
         report_format: The format of the report to generate
-        
+
     Returns:
         A formatted prompt for research
     """
     return create_research_prompt(topic, goal, report_format)
+
+
+# ============================================================================
+# Court Listener Tools
+# ============================================================================
+import httpx
+
+
+class CourtListenerClient:
+    """Lightweight Court Listener client."""
+
+    def __init__(self):
+        self.base_url = os.getenv("COURTLISTENER_BASE_URL", "https://www.courtlistener.com/api/rest/v3")
+        self.token = os.getenv("COURTLISTENER_API_KEY", "")
+        self.timeout = 30.0
+        self.headers = {
+            "Authorization": f"Token {self.token}" if self.token else "",
+        }
+
+    async def get(self, endpoint: str, params: dict | None = None) -> dict:
+        if params:
+            params = {k: v for k, v in params.items() if v is not None}
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}{endpoint}",
+                headers=self.headers,
+                params=params,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def post(self, endpoint: str, data: dict | None = None) -> dict:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}{endpoint}",
+                headers=self.headers,
+                data=data,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+
+
+_court_client = None
+
+def get_court_client():
+    global _court_client
+    if _court_client is None:
+        _court_client = CourtListenerClient()
+    return _court_client
+
+
+@mcp.tool()
+async def search_cases(
+    query: str,
+    court: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    max_results: int = 10,
+) -> dict:
+    """
+    Search legal cases by keyword, party name, or citation.
+
+    Args:
+        query: Search query (keyword, party name, or citation)
+        court: Court ID to filter by (e.g., 'scotus', 'ca9')
+        date_from: Start date filter (YYYY-MM-DD)
+        date_to: End date filter (YYYY-MM-DD)
+        max_results: Maximum results to return (default 10)
+
+    Returns:
+        Dictionary with 'results' (list) and 'count' (int)
+    """
+    client = get_court_client()
+    params = {
+        "type": "o",
+        "q": query,
+        "page_size": max_results,
+    }
+    if court:
+        params["court"] = court
+    if date_from:
+        params["filed_after"] = date_from
+    if date_to:
+        params["filed_before"] = date_to
+
+    result = await client.get("/search/", params)
+    return {
+        "results": result.get("results", []),
+        "count": result.get("count", 0),
+    }
+
+
+@mcp.tool()
+async def get_opinion(opinion_id: int) -> dict:
+    """
+    Retrieve the full text of a legal opinion by its ID.
+
+    Args:
+        opinion_id: Court Listener opinion ID
+
+    Returns:
+        Dictionary with opinion details including full text
+    """
+    client = get_court_client()
+    return await client.get(f"/opinions/{opinion_id}/")
+
+
+@mcp.tool()
+async def lookup_citation(citation: str) -> dict:
+    """
+    Look up a legal citation and return the matching case.
+
+    Args:
+        citation: Legal citation (e.g., '384 U.S. 436')
+
+    Returns:
+        Dictionary with matched citations and case details
+    """
+    client = get_court_client()
+    result = await client.post("/citation-lookup/", data={"text": citation})
+    return {"citations": result if isinstance(result, list) else [result]}
+
+
+# ============================================================================
+# Gemini File Search Tools
+# ============================================================================
+from clients import GeminiFileSearch
+
+
+@mcp.tool()
+async def create_file_store(name: str, display_name: str | None = None) -> dict:
+    """
+    Create a new Gemini file store for document RAG.
+
+    Args:
+        name: Unique name for the store
+        display_name: Human-readable display name
+
+    Returns:
+        Dictionary with 'store_name' and 'store_id'
+    """
+    fs = GeminiFileSearch()
+    result = await fs.create_store(name=name, display_name=display_name)
+    return result.model_dump()
+
+
+@mcp.tool()
+async def upload_to_file_store(
+    store_name: str,
+    file_path: str,
+) -> dict:
+    """
+    Upload a file to a Gemini file store.
+
+    Args:
+        store_name: Name of the file store
+        file_path: Local path to the file
+
+    Returns:
+        Dictionary with 'file_id' and 'status'
+    """
+    fs = GeminiFileSearch()
+    result = await fs.upload(store_name=store_name, file_path=file_path)
+    return result.model_dump()
+
+
+@mcp.tool()
+async def file_search_query(
+    store_name: str,
+    query: str,
+) -> dict:
+    """
+    Query documents in a Gemini file store using RAG.
+
+    Args:
+        store_name: Name of the file store
+        query: Search query
+
+    Returns:
+        Dictionary with 'answer' and 'citations'
+    """
+    fs = GeminiFileSearch()
+    result = await fs.query(
+        store_name=store_name,
+        query=query,
+    )
+    return result.model_dump()
+
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request):
