@@ -90,7 +90,7 @@ MarkupSafe==3.0.3
 marshmallow==3.26.1
 mcp==1.23.1
 md2pdf==1.0.1
-mistune==3.1.4
+mistune==3.2.0
 multidict==6.7.0
 mypy_extensions==1.1.0
 nest-asyncio==1.6.0
