@@ -1,0 +1,422 @@
+"""
+Legal Intelligence MCP Hub - Server Entry Point
+
+A unified MCP server providing legal research tools:
+- GPT Researcher: Deep research, quick search, report generation, S3 upload
+- Court Listener: Case search, opinion retrieval, citation lookup
+- Gemini: Web search, file store management, document RAG
+
+Usage:
+    python server.py                    # Run with default settings
+    python server.py --port 9000        # Custom port
+    python server.py --transport stdio  # Use stdio transport (for local testing)
+
+Environment Variables:
+    See .env.example for required configuration
+"""
+
+import argparse
+import logging
+import sys
+from pathlib import Path
+
+# Add package to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+from mcp.server.fastmcp import FastMCP
+
+from config import config
+
+# Determine if we're in stdio mode BEFORE configuring logging
+# This prevents any log output from breaking JSON-RPC communication
+_is_stdio_mode = "--transport" in sys.argv and "stdio" in sys.argv
+
+# Configure logging - disable in stdio mode to prevent interference
+if _is_stdio_mode:
+    # In stdio mode, suppress all logging to avoid breaking JSON-RPC
+    logging.basicConfig(level=logging.CRITICAL + 1)  # Effectively disable
+else:
+    logging.basicConfig(
+        level=getattr(logging, config.server.log_level),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+logger = logging.getLogger("legal-mcp-hub")
+
+# Create main MCP server
+mcp = FastMCP("Legal Intelligence Hub")
+
+
+# ============================================================================
+# GPT Researcher Tools
+# ============================================================================
+from gpt_researcher import GPTResearcher
+from clients import S3Client
+
+
+@mcp.tool()
+async def deep_research(
+    query: str,
+    report_type: str = "research_report",
+    max_sources: int = 10,
+) -> dict:
+    """
+    Conduct comprehensive research on a topic using GPT Researcher.
+
+    Args:
+        query: The research question or topic
+        report_type: Type of report (research_report, detailed_report, quick_report)
+        max_sources: Maximum number of sources to use (default 10)
+
+    Returns:
+        Dictionary with 'research_data' and 'sources'
+    """
+    researcher = GPTResearcher(query=query, report_type=report_type)
+    research_data = await researcher.conduct_research()
+    return {
+        "research_data": research_data,
+        "sources": researcher.get_source_urls() if hasattr(researcher, "get_source_urls") else [],
+    }
+
+
+@mcp.tool()
+async def quick_search(query: str, max_results: int = 5) -> dict:
+    """
+    Perform a quick web search on a topic.
+
+    Args:
+        query: Search query
+        max_results: Maximum results to return (default 5)
+
+    Returns:
+        Dictionary with 'results' list
+    """
+    researcher = GPTResearcher(query=query, report_type="quick_report")
+    results = await researcher.conduct_research()
+    return {"results": results[:max_results] if isinstance(results, list) else results}
+
+
+@mcp.tool()
+async def write_report(
+    query: str,
+    research_data: str,
+    report_type: str = "research_report",
+) -> dict:
+    """
+    Generate a formatted report from research data.
+
+    Args:
+        query: Original research question
+        research_data: Raw research data to format
+        report_type: Type of report format
+
+    Returns:
+        Dictionary with 'report' (markdown text)
+    """
+    researcher = GPTResearcher(query=query, report_type=report_type)
+    researcher.context = research_data
+    report = await researcher.write_report()
+    return {"report": report}
+
+
+@mcp.tool()
+async def save_report_to_s3(
+    report: str,
+    bucket: str,
+    key: str | None = None,
+    filename_prefix: str = "research_report",
+) -> dict:
+    """
+    Save a research report to AWS S3.
+
+    Args:
+        report: Report content (markdown)
+        bucket: S3 bucket name
+        key: S3 object key (auto-generated if not provided)
+        filename_prefix: Prefix for auto-generated filename
+
+    Returns:
+        Dictionary with 's3_url' and 'key'
+    """
+    s3 = S3Client()
+    result = await s3.upload_report(
+        report=report,
+        bucket=bucket,
+        key=key,
+        filename_prefix=filename_prefix,
+    )
+    return result
+
+
+# ============================================================================
+# Court Listener Tools
+# ============================================================================
+import httpx
+
+
+class CourtListenerClient:
+    """Lightweight Court Listener client."""
+
+    def __init__(self):
+        self.base_url = config.court_listener.base_url
+        self.token = config.court_listener.api_key
+        self.timeout = config.court_listener.timeout
+        self.headers = {
+            "Authorization": f"Token {self.token}" if self.token else "",
+        }
+
+    async def get(self, endpoint: str, params: dict | None = None) -> dict:
+        if params:
+            params = {k: v for k, v in params.items() if v is not None}
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}{endpoint}",
+                headers=self.headers,
+                params=params,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def post(self, endpoint: str, data: dict | None = None) -> dict:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}{endpoint}",
+                headers=self.headers,
+                data=data,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+
+
+_court_client = None
+
+def get_court_client():
+    global _court_client
+    if _court_client is None:
+        _court_client = CourtListenerClient()
+    return _court_client
+
+
+@mcp.tool()
+async def search_cases(
+    query: str,
+    court: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    max_results: int = 10,
+) -> dict:
+    """
+    Search legal cases by keyword, party name, or citation.
+
+    Args:
+        query: Search query (keyword, party name, or citation)
+        court: Court ID to filter by (e.g., 'scotus', 'ca9')
+        date_from: Start date filter (YYYY-MM-DD)
+        date_to: End date filter (YYYY-MM-DD)
+        max_results: Maximum results to return (default 10)
+
+    Returns:
+        Dictionary with 'results' (list) and 'count' (int)
+    """
+    client = get_court_client()
+    params = {
+        "type": "o",
+        "q": query,
+        "page_size": max_results,
+    }
+    if court:
+        params["court"] = court
+    if date_from:
+        params["filed_after"] = date_from
+    if date_to:
+        params["filed_before"] = date_to
+
+    result = await client.get("/search/", params)
+    return {
+        "results": result.get("results", []),
+        "count": result.get("count", 0),
+    }
+
+
+@mcp.tool()
+async def get_opinion(opinion_id: int) -> dict:
+    """
+    Retrieve the full text of a legal opinion by its ID.
+
+    Args:
+        opinion_id: Court Listener opinion ID
+
+    Returns:
+        Dictionary with opinion details including full text
+    """
+    client = get_court_client()
+    return await client.get(f"/opinions/{opinion_id}/")
+
+
+@mcp.tool()
+async def lookup_citation(citation: str) -> dict:
+    """
+    Look up a legal citation and return the matching case.
+
+    Args:
+        citation: Legal citation (e.g., '384 U.S. 436')
+
+    Returns:
+        Dictionary with matched citations and case details
+    """
+    client = get_court_client()
+    result = await client.post("/citation-lookup/", data={"text": citation})
+    return {"citations": result if isinstance(result, list) else [result]}
+
+
+# ============================================================================
+# Gemini Tools
+# ============================================================================
+from clients import GeminiCLI, GeminiFileSearch
+
+
+@mcp.tool()
+async def web_search(query: str) -> dict:
+    """
+    Perform a web search using Gemini CLI with grounding.
+
+    Args:
+        query: Search query
+
+    Returns:
+        Dictionary with 'response' text
+    """
+    gemini = GeminiCLI()
+    result = await gemini.search(query)
+    return {"response": result}
+
+
+@mcp.tool()
+async def create_file_store(name: str, display_name: str | None = None) -> dict:
+    """
+    Create a new Gemini file store for document RAG.
+
+    Args:
+        name: Unique name for the store
+        display_name: Human-readable display name
+
+    Returns:
+        Dictionary with 'store_name' and 'store_id'
+    """
+    fs = GeminiFileSearch()
+    result = await fs.create_store(name=name, display_name=display_name)
+    return result
+
+
+@mcp.tool()
+async def upload_to_file_store(
+    store_name: str,
+    file_path: str,
+) -> dict:
+    """
+    Upload a file to a Gemini file store.
+
+    Args:
+        store_name: Name of the file store
+        file_path: Local path to the file
+
+    Returns:
+        Dictionary with 'file_id' and 'status'
+    """
+    fs = GeminiFileSearch()
+    result = await fs.upload(store_name=store_name, file_path=file_path)
+    return result
+
+
+@mcp.tool()
+async def file_search_query(
+    store_name: str,
+    query: str,
+) -> dict:
+    """
+    Query documents in a Gemini file store using RAG.
+
+    Args:
+        store_name: Name of the file store
+        query: Search query
+
+    Returns:
+        Dictionary with 'results' and 'answer'
+    """
+    fs = GeminiFileSearch()
+    result = await fs.query(
+        store_name=store_name,
+        query=query,
+    )
+    return result
+
+
+# ============================================================================
+# Health Check
+# ============================================================================
+@mcp.tool()
+async def health_check() -> dict:
+    """
+    Check server health and list available tools.
+    
+    Returns:
+        Dictionary with 'status', 'server_name', and 'tools' count
+    """
+    return {
+        "status": "healthy",
+        "server_name": "Legal Intelligence Hub",
+        "version": "1.0.0",
+        "tools": {
+            "gpt_researcher": ["deep_research", "quick_search", "write_report", "save_report_to_s3"],
+            "court_listener": ["search_cases", "get_opinion", "lookup_citation"],
+            "gemini": ["web_search", "create_file_store", "upload_to_file_store", "file_search_query"],
+        },
+        "total_tools": 11,
+    }
+
+
+def main():
+    """Run the MCP server."""
+    parser = argparse.ArgumentParser(
+        description="Legal Intelligence MCP Hub Server"
+    )
+    parser.add_argument(
+        "--host",
+        default=config.server.host,
+        help=f"Host to bind to (default: {config.server.host})",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=config.server.port,
+        help=f"Port to listen on (default: {config.server.port})",
+    )
+    parser.add_argument(
+        "--transport",
+        choices=["streamable-http", "sse", "stdio"],
+        default="streamable-http",
+        help="Transport protocol (default: streamable-http)",
+    )
+    args = parser.parse_args()
+
+    if args.transport == "stdio":
+        # CRITICAL: In stdio mode, do NOT log anything before mcp.run()
+        # Any output to stdout/stderr can break JSON-RPC communication
+        # The MCP SDK handles all protocol communication
+        mcp.run(transport="stdio")
+    else:
+        # Only log in non-stdio modes where it won't interfere
+        logger.info(f"Starting Legal Intelligence MCP Hub")
+        logger.info(f"Transport: {args.transport}")
+        logger.info(f"Listening on http://{args.host}:{args.port}/mcp/")
+        mcp.run(
+            transport=args.transport,
+            host=args.host,
+            port=args.port,
+        )
+
+
+if __name__ == "__main__":
+    main()
+

@@ -1,0 +1,40 @@
+# Minimal requirements for GPT Researcher in Docker
+# This avoids the dependency conflicts in the full requirements.txt
+
+# Core GPT Researcher dependencies
+aiofiles>=23.2.0
+aiohttp>=3.9.0
+beautifulsoup4>=4.12.0
+httpx>=0.27.0
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.0.0
+
+# LangChain (minimal - just what GPT Researcher needs)
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+
+# LLM providers (minimal versions without conflicts)
+openai>=1.3.0
+litellm>=1.50.0
+
+# Search and scraping
+duckduckgo-search>=4.0.0
+tavily-python>=0.7.0
+
+# Document processing (minimal)
+python-docx>=1.0.0
+pymupdf>=1.23.0
+markdown>=3.5.0
+
+# Utilities
+requests>=2.31.0
+tiktoken>=0.7.0
+colorama>=0.4.6
+
+# MCP Server specific
+mcp>=1.0.0
+boto3>=1.35.0
+google-genai>=1.0.0
+
