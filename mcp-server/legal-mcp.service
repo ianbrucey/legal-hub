@@ -1,0 +1,32 @@
+[Unit]
+Description=Legal Intelligence MCP Hub
+Documentation=https://github.com/ianbrucey/legal-hub
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/legal-hub/mcp-server
+Environment="PATH=/root/legal-hub/mcp-server/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Load environment variables from .env file
+EnvironmentFile=/root/legal-hub/mcp-server/.env
+
+# Start the MCP server in HTTP mode
+ExecStart=/root/legal-hub/mcp-server/.venv/bin/python server.py --transport streamable-http --host 0.0.0.0 --port 8000
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Resource limits (optional but recommended)
+LimitNOFILE=65536
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=legal-mcp
+
+[Install]
+WantedBy=multi-user.target
+
