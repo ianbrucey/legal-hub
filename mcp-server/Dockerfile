@@ -47,15 +47,17 @@ RUN useradd --create-home --shell /bin/bash mcp \
 USER mcp
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8001
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV MCP_HOST=0.0.0.0
+ENV MCP_PORT=8001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/mcp/ || exit 1
+    CMD curl -f http://localhost:8001/mcp/ || exit 1
 
 # Run server with HTTP transport by default
 ENTRYPOINT ["python", "server.py"]
-CMD ["--host", "0.0.0.0", "--port", "8000", "--transport", "streamable-http"]
+CMD ["--host", "0.0.0.0", "--port", "8001", "--transport", "streamable-http"]

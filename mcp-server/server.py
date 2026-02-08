@@ -15,6 +15,12 @@ Environment Variables:
     See .env.example for required configuration
 """
 
+# CRITICAL: Suppress warnings before any imports
+# Warnings to stderr break stdio JSON-RPC communication
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*Pydantic.*")
+
 import argparse
 import logging
 import os
@@ -384,8 +390,8 @@ def main():
     parser.add_argument(
         "--transport",
         choices=["streamable-http", "sse", "stdio"],
-        default="streamable-http",
-        help="Transport protocol (default: streamable-http)",
+        default="stdio",
+        help="Transport protocol (default: stdio)",
     )
     args = parser.parse_args()
 
@@ -395,15 +401,14 @@ def main():
         # The MCP SDK handles all protocol communication
         mcp.run(transport="stdio")
     else:
-        # Set host and port via environment variables (FastMCP reads these)
-        os.environ["MCP_HOST"] = args.host
-        os.environ["MCP_PORT"] = str(args.port)
-
         # Only log in non-stdio modes where it won't interfere
         logger.info(f"Starting Legal Intelligence MCP Hub")
         logger.info(f"Transport: {args.transport}")
         logger.info(f"Listening on http://{args.host}:{args.port}/mcp/")
-        mcp.run(transport=args.transport)
+
+        # Pass host and port directly to mcp.run() for HTTP/SSE transports
+        # This is required for Docker containers to bind to 0.0.0.0
+        mcp.run(transport=args.transport, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
